@@ -1,0 +1,11 @@
+
+gnorm to real data:  0.104584336539
+lognorm to grammar:  0.0743169569224
+Optimization terminated successfully.
+         Current function value: 3.861855
+         Iterations: 15
+         Function evaluations: 18
+         Gradient evaluations: 18
+nb to real data:  0.0247500989366
+nb to grammar:  0.02778834086
+grammar to real:  0.0771270143621

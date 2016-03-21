@@ -1,24 +1,31 @@
-import random
+from numpy.random import choice
 
 lexicon_file = "out.txt.lexicon"
 grammar_file = "eliminated.grammar"
 grammar_dict = {}
 terminal_dict = {}
 
+def getWeight(weights):
+	return [float(i)/sum(weights) for i in weights]
+
 def generate(root):
 	if root in grammar_dict:
-		choice = random.randint(0, len(grammar_dict[root].keys())-1)
-		rule = grammar_dict[root].keys()[choice]
+		#choice = random.randint(0, len(grammar_dict[root].keys())-1)
+		#rule = grammar_dict[root].keys()[choice]
+		rule = choice(grammar_dict[root].keys(), p = getWeight(grammar_dict[root].values()))
 		rules = rule.split(" ")
 		if len(rules) >= 2:
+			print rules
 			left = generate(rules[0])
 			right = generate(rules[1])
 			return " ".join([left, right])
 		elif len(rules) == 1:
 			return generate(rules[0])
 	if root in terminal_dict:
-			choice = random.randint(0, len(terminal_dict[root].keys())-1)
-			return terminal_dict[root].keys()[choice]
+			print root
+			#choice = random.randint(0, len(terminal_dict[root].keys())-1)
+			#return terminal_dict[root].keys()[choice]
+			return choice(terminal_dict[root].keys(), p = getWeight(terminal_dict[root].values()))
 	return ""
 
 
@@ -66,6 +73,6 @@ if __name__=="__main__":
 	
 	
 	# generate sentence	
-	for i in range(30):
+	for i in range(5):
 		print generate("ROOT_0")
 
