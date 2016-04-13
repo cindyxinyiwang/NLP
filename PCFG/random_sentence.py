@@ -10,21 +10,17 @@ def getWeight(weights):
 
 def generate(root):
 	if root in grammar_dict:
-		#choice = random.randint(0, len(grammar_dict[root].keys())-1)
-		#rule = grammar_dict[root].keys()[choice]
 		rule = choice(grammar_dict[root].keys(), p = getWeight(grammar_dict[root].values()))
 		rules = rule.split(" ")
 		if len(rules) >= 2:
-			print rules
+			#print rules
 			left = generate(rules[0])
 			right = generate(rules[1])
 			return " ".join([left, right])
 		elif len(rules) == 1:
 			return generate(rules[0])
 	if root in terminal_dict:
-			print root
-			#choice = random.randint(0, len(terminal_dict[root].keys())-1)
-			#return terminal_dict[root].keys()[choice]
+			#print root
 			return choice(terminal_dict[root].keys(), p = getWeight(terminal_dict[root].values()))
 	return ""
 

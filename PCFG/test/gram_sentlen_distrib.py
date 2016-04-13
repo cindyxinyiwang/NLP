@@ -169,15 +169,19 @@ for l in range(total_len):
 		distrib[t][l] = unary_distrib_new.item(i, 0)
 
 # write distrib to a file
+"""
 distrib_file = open("distrib.txt", 'w')
 for t in distrib:
 	distrib_file.write(t + ":" + str(distrib[t]))
 	distrib_file.write('\n')
 distrib_file.close()
+"""
+plt.plot([ i+1 for i in range(len(distrib['ROOT_0']))], distrib['ROOT_0'])
+plt.show()
 
-#plt.plot([ i+1 for i in range(len(distrib['ROOT_0']))], distrib['ROOT_0'])
-#plt.show()
+print distrib['ROOT_0'], sum(distrib['ROOT_0'])
 
+"""
 # get the split_dict
 for n in range(total_len):
 	for k in range(n):
@@ -225,3 +229,4 @@ for t in split_dict:
 	for n in split_dict[t]:
 		split_file.write(t + "; length " + str(n) + ":" + str(split_dict[t][n]) + '\n')
 split_file.close()
+"""

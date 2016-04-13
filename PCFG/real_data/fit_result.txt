@@ -1,0 +1,23 @@
+autin-emma:
+
+lognorm to real data:  0.0221489632054
+lognorm to grammar:  0.113179340934
+Optimization terminated successfully.
+         Current function value: 4.184067
+         Iterations: 13
+         Function evaluations: 22
+         Gradient evaluations: 22
+nb to real data:  0.042875141581
+nb to grammar:  0.103492161115
+
+brown:
+
+lognorm to real data:  0.0395747056279
+lognorm to grammar:  0.0663843963668
+Optimization terminated successfully.
+         Current function value: 3.843079
+         Iterations: 14
+         Function evaluations: 19
+         Gradient evaluations: 19
+nb to real data:  0.00427176241226
+nb to grammar:  0.0333552323385
