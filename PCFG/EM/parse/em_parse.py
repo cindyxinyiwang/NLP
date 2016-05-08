@@ -164,7 +164,8 @@ class EM():
 				self.mu_A[s][i] = {}
 				for j in range(length - i):
 					j += i
-					self.mu_A[s][i][j] = self.alpha[s][i][j] * self.beta[s][i][j]
+					#self.mu_A[s][i][j] = self.alpha[s][i][j] * self.beta[s][i][j]
+					self.mu_A[s][i][j] = self.alpha[s][i][j] + self.beta[s][i][j]
 
 		self.mu_A_rules = {}
 		self.count_rules = {}
@@ -176,21 +177,28 @@ class EM():
 				rule_l = r.split()
 				prob = rules[r]
 				if len(rule_l) == 2:
-					self.mu_A_rules[s][r] = 0
+					#self.mu_A_rules[s][r] = 0
+					self.mu_A_rules[s][r] = -np.inf
 					for l in range(length):
 						for i in range(length - l):
 							j = i + l
 							for k in range(l-1):
 								k += i
-								self.mu_A_rules[s][r] += self.beta[s][i][j] * prob * self.alpha[rule_l[0]][i][k] * self.alpha[rule_l[1]][k+1][j]
-					self.count_rules[s][r] = self.mu_A_rules[s][r]/self.Z
+								add = self.beta[s][i][j] + np.log(prob) + self.alpha[rule_l[0]][i][k] + self.alpha[rule_l[1]][k+1][j]
+								self.mu_A_rules[s][r] = np.logaddexp(add, self.mu_A_rules[s][r])
+					#self.count_rules[s][r] = self.mu_A_rules[s][r]/self.Z
+					self.count_rules[s][r] = self.mu_A_rules[s][r] - self.Z
 				else:
-					self.count_rules[s][r] = 0
-					self.mu_A_rules[s][r] = 0
+					#self.count_rules[s][r] = 0
+					#self.mu_A_rules[s][r] = 0
+					self.count_rules[s][r] = -np.inf
+					self.mu_A_rules[s][r] = -np.inf
 					for i in range(length):
 						if sent[i] == r:
-							self.mu_A_rules[s][r] += self.mu_A[s][i][i]
-					self.count_rules[s][r] = self.mu_A_rules[s][r]/self.Z
+							#self.mu_A_rules[s][r] += self.mu_A[s][i][i]
+							self.mu_A_rules[s][r] = np.logaddexp(self.mu_A_rules[s][r], self.mu_A[s][i][i]) 
+					#self.count_rules[s][r] = self.mu_A_rules[s][r]/self.Z
+					self.count_rules[s][r] = self.mu_A_rules[s][r] - self.Z
 
 	def linear_order_rules(self):
 		# eliminate rules to get linearly recursive grammar
@@ -207,7 +215,7 @@ class EM():
 		# normalize the elimintated grammar
 		for s in self.grammar.rule_dict:
 			rules = self.grammar.rule_dict[s]
-			sum_s = -
+			sum_s = 0
 			for r in rules:
 				sum_s += rules[r]
 			for r in rules:
@@ -223,7 +231,7 @@ class EM():
 				l = r.split()
 				prob = rules[r]
 				if len(l) == 1:
-					single_rule_dict[l[0]] = prob
+					single_rule_dict[l[0]] = np.log(prob)
 
 
 			for i in range(length):
@@ -235,7 +243,8 @@ class EM():
 				j = i + l
 				for s in self.grammar.rule_dict:
 					if j not in self.alpha[s][i]:
-						self.alpha[s][i][j] = 0
+						#self.alpha[s][i][j] = 0
+						self.alpha[s][i][j] = -np.inf
 					rules = self.grammar.rule_dict[s]
 					for r in rules:
 						rule_l = r.split()
@@ -243,7 +252,9 @@ class EM():
 						if len(rule_l) == 2:	
 							for k in range(j - i):
 								k += i
-								self.alpha[s][i][j] += self.alpha[rule_l[0]][i][k] * self.alpha[rule_l[1]][k+1][j] * prob
+								#self.alpha[s][i][j] += self.alpha[rule_l[0]][i][k] * self.alpha[rule_l[1]][k+1][j] * prob
+								add = self.alpha[rule_l[0]][i][k] + self.alpha[rule_l[1]][k+1][j] + np.log(prob)
+								self.alpha[s][i][j] = np.logaddexp(self.alpha[s][i][j], add)
 		
 
 
@@ -256,8 +267,10 @@ class EM():
 				self.beta[s][i] = {}
 				for j in range(length - i):
 					j += i
-					self.beta[s][i][j] = 0
-		self.beta[self.grammar.start][0][length-1] = 1
+					#self.beta[s][i][j] = 0
+					self.beta[s][i][j] = -np.inf
+		#self.beta[self.grammar.start][0][length-1] = 1
+		self.beta[self.grammar.start][0][length-1] = np.log(1)
 	
 		for l in range(length):
 			for i in range(length-l):
@@ -276,15 +289,20 @@ class EM():
 								self.beta[y][i] = {}
 							for k in range(j-i):
 								k += (i + 1)
-								self.beta[y][i][k] += self.beta[x][i][j] * self.alpha[z][k][j] * prob
-								self.beta[z][k][j] += self.beta[x][i][j] * self.alpha[y][i][k] * prob
+								#self.beta[y][i][k] += self.beta[x][i][j] * self.alpha[z][k][j] * prob
+								add = self.beta[x][i][j] + self.alpha[z][k][j] + np.log(prob)
+								self.beta[y][i][k] = np.logaddexp(add, self.beta[y][i][k])
+
+								add = self.beta[x][i][j] + self.alpha[y][i][k] + np.log(prob)
+								self.beta[z][k][j] = np.logaddexp(add, self.beta[z][k][j])
 
 	def expectation(self):
 		self.f_rules = {}
 		for s in self.grammar.rule_dict:
 			self.f_rules[s] = {}
 			for r in self.grammar.rule_dict[s]:
-				self.f_rules[s][r] = 0
+				#self.f_rules[s][r] = 0
+				self.f_rules[s][r] = -np.inf
 		i = 0
 		with open("../clean/sec00.tags") as tags_file:
 			for line in tags_file:
@@ -295,7 +313,8 @@ class EM():
 				self.getParam(sent)
 				for s in self.grammar.rule_dict:
 					for r in self.grammar.rule_dict[s]:
-						self.f_rules[s][r] += self.count_rules[s][r]
+						#self.f_rules[s][r] += self.count_rules[s][r]
+						self.f_rules[s][r] =  np.logaddexp(self.f_rules[s][r], self.count_rules[s][r]) 
 
 	def maximization(self):
 		for x in self.grammar.rule_dict:
@@ -303,9 +322,16 @@ class EM():
 			r_expects = self.f_rules[x]
 			sum_x = 0
 			for s in r_expects:
-				sum_x += r_expects[s]
+				#sum_x += r_expects[s]
+				#sum_x = np.logaddexp(np.log(r_expects[s]), sum_x)
+				sum_x += np.exp(r_expects[s])
+			t = 0
 			for r in r_rules:
-				self.grammar.rule_dict[x][r] = r_expects[r]/sum_x
+				#self.grammar.rule_dict[x][r] = r_expects[r]/sum_x
+				#self.grammar.rule_dict[x][r] = np.log(r_expects[r]) - sum_x
+				self.grammar.rule_dict[x][r] = np.exp(r_expects[r]) / sum_x
+				t += self.grammar.rule_dict[x][r]
+			print x, t
 
 		#self.grammar.printAllRules()
 		#print self.expect
