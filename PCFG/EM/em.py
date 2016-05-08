@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
+from scipy.stats import nbinom
+
 class GrammarGen():
 	def __init__(self, alp):
 		self.alphabet = alp
@@ -67,6 +69,21 @@ class EM():
 
 		self.initLenDistrib(normalize=False)
 		self.getLogLikelihood()
+
+	def get_nb(self):
+		p = 0.200086480861
+		n = 4.88137405883
+		x = np.arange(0, self.distrib_len)
+		self.nb_pmf = nbinom.pmf(x, n, p)
+
+	def getNBLogLikelihood(self):
+		log_result = 0
+		for i in range(self.distrib_len):
+			i += 1	# start from length 1
+			if i in self.emp_count:
+				log_result += self.emp_count[i] * np.log(self.nb_pmf[i])
+		self.nb_logLikelihood = log_result
+
 
 	def _get_emp_count(self, filename):
 		with open(filename) as myfile:
@@ -250,7 +267,7 @@ class EM():
 			self.maximization()
 			self.initLenDistrib(normalize=False)
 			self.getLogLikelihood()
-			print self.loglikelihood
+			#print self.loglikelihood
 			#self.check()
 			#self.grammar.printAllRules()
 			#print self.expect
@@ -258,10 +275,18 @@ class EM():
 				break
 
 if __name__ == "__main__":
-	gram = GrammarGen(['A', 'B' ])
+	gram = GrammarGen(['A', 'B'])
 	gram.getAllRules()
 	#gram.printAllRules()
 
 	
 	em = EM(gram)
-	em.iteration(50, 0)
+	#em.get_nb()
+	#em.getNBLogLikelihood()
+
+	#print em.nb_logLikelihood
+
+	em.iteration(10000, 5)
+
+	print em.loglikelihood
+	em.grammar.printAllRules()

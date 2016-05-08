@@ -76,12 +76,12 @@ plt.plot(x, pdf, linewidth=2, color='r')
 fit_kl = entropy(probs, pdf)
 print fit_kl
 
-mu1, sigma1 = 3.25, 0.45 # mean and standard deviation
+mu1, sigma1 = 4.88137405883, 0.200086480861 # mean and standard deviation
 #mu, sigma = norm.fit(np.log(len_list))
 print mu1, sigma1
 x = np.linspace(1, 100, 100)
 pdf1 = (np.exp(-(np.log(x) - mu1)**2 / (2 * sigma1**2)) / (x * sigma1 * np.sqrt(2 * np.pi)))
-plt.plot(x, pdf1, linewidth=2, color='b')
+plt.plot(x, pdf1, linewidth=2, color='r')
 pick_kl = entropy(probs, pdf1)
 print pick_kl
 

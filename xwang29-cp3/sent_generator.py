@@ -2,58 +2,10 @@
 from random import random
 from bisect import bisect
 import random as rd
-from nltk.tokenize import word_tokenize
+import copy
+
 import sys
 
-class markov:
-	def __init__(self, train_file="", level=2):
-		self.model = {}
-		self.n = level
-		self.text = self.readtraining(train_file)
-		self.tokens = word_tokenize(self.text)
-		self.build_model_word()
-		
-
-	def readtraining(self, filepath):
-		with open(filepath, "r") as file:
-			return file.read()
-
-	def build_model_word(self):
-		n = self.n
-		model = dict()
-		#tokens = self.text.strip().split(" ")
-		if len(self.tokens) < n:
-			return model
-		for i in range(len(self.tokens) - n):
-			gram = tuple(self.tokens[i:i+n])
-			next_token = self.tokens[i+n]
-			if gram in model:
-				model[gram].append(next_token)
-			else:
-				model[gram] = [next_token]
-		final_gram = tuple(self.tokens[len(self.tokens)-n:])
-		if final_gram in model:
-			model[final_gram].append(None)
-		else:
-			model[final_gram] = [None]
-		self.model = model
-
-	def generate(self,seed=None, max_iterations=20):
-		n = self.n
-		if seed is None:
-			seed = rd.choice(self.model.keys())
-		output = list(seed)
-		current = tuple(seed)
-		for i in range(max_iterations):
-			if current in self.model:
-				possible_next_tokens = self.model[current]
-				next_token = rd.choice(possible_next_tokens)
-				if next_token is None: break
-				output.append(next_token)
-				current = tuple(output[-n:])
-			else:
-				break
-		return ' '.join(output)
 
 class sent_generator:
 	def __init__(self, gram_file="eliminated.grammar", lex_file="out.txt.lexicon"):
@@ -120,34 +72,78 @@ class sent_generator:
 		i = bisect(cum_weights, x)
 		return values[i]
 
-	def generate(self, root):
+	def generate(self, root, used_dict, num_list):
+		"""
+		used_list: list of non_terminals already used_list
+		num_list[0]: total number of nodes so far
+		num_list[1]: number of nodes with two or more recursive descendents
+		"""
+		num_list[0] += 1
+		appended = False
+		if root in used_dict:
+			used_dict[root] += 1
+		else:
+			appended = True
+			used_dict[root] = 0
+
+		sys.stdout.write("(" + root)
 		if root in self.grammar_dict:
 			rule = self.choice(self.grammar_dict[root].keys(), p = self.getWeight(self.grammar_dict[root].values()))
 			rules = rule.split(" ")
 			if len(rules) >= 2:
 				#print rules
-				left = self.generate(rules[0])
-				right = self.generate(rules[1])
-				return " ".join([left, right])
+				right_dict = copy.deepcopy(used_dict)
+				left_dict = copy.deepcopy(used_dict)
+				#sys.stdout.write(" (" + rules[0])
+				self.generate(rules[0], left_dict, num_list)
+				#sys.stdout.write(" " + rules[1])
+				self.generate(rules[1], right_dict, num_list)
+				#sys.stdout.write(")")
+				used_dict[root] = left_dict[root] + right_dict[root] - used_dict[root]
+				if used_dict[root] > 1:
+					num_list[1] += 1
+				#return " ".join([left, right])
 			elif len(rules) == 1:
-				return self.generate(rules[0])
+				#sys.stdout.write("(" + rules[0])
+				self.generate(rules[0], used_dict, num_list)
+				#sys.stdout.write(")")
+				if used_dict[root] > 1:
+				 	num_list[1] += 1
 		if root in self.terminal_dict:
 				#print root
-				return self.choice(self.terminal_dict[root].keys(), p = self.getWeight(self.terminal_dict[root].values()))
-		return ""
+				if used_dict[root] > 1:
+					num_list[1] += 1
+				#return self.choice(self.terminal_dict[root].keys(), p = self.getWeight(self.terminal_dict[root].values()))
+
+		sys.stdout.write(")\n")
 
 if __name__=="__main__":
 	gen = sent_generator()
-	mar = markov("train.txt")
+	"""
 	while True:
 		choice = raw_input("Please select: q to quit, p for generate with PCFG grammar, m for generate with Markov chain")
 		if choice == 'q':
 			sys.exit(1)
 		if choice == 'p':
-			print gen.generate("ROOT_0")
+			num_list = [0, 0]
+			used_list = []
+			print gen.generate("ROOT_0", used_list, num_list)
+			print num_list
+			print used_list
 			continue
 		if choice == 'm':
-			print mar.generate()
+			pass
 		else:
 			print "Not recognized!"
-
+	"""
+	total_tree = 0
+	recursive_tree = 0
+	for i in range(2):
+		num_list = [0, 0]
+		used_dict = {}
+		gen.generate("ROOT_0", used_dict, num_list)
+		print num_list
+		total_tree += num_list[0]
+		recursive_tree += num_list[1]
+	print "total_tree: " + str(total_tree)
+	print "recursive_tree: " + str(recursive_tree)

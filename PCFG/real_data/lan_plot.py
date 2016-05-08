@@ -213,5 +213,5 @@ class lan_plot():
 		plt.show()
 
 if __name__=="__main__":
-	p = lan_plot("grammar_gen.txt")
+	p = lan_plot("sec02-21.words")
 	p.plot()
